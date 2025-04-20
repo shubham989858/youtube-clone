@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm"
 
 import { db } from "@/db"
 import { users } from "@/db/schema"
+import { ratelimit } from "@/lib/ratelimit"
 
 export const createTRPCContext = cache(async () => {
     const { userId } = await auth()
@@ -45,6 +46,14 @@ export const protectedProcedure = t.procedure.use(async function isAuthenticated
     if (!user) {
         throw new TRPCError({
             code: "UNAUTHORIZED",
+        })
+    }
+
+    const { success } = await ratelimit.limit(user.id)
+
+    if (!success) {
+        throw new TRPCError({
+            code: "TOO_MANY_REQUESTS",
         })
     }
 
