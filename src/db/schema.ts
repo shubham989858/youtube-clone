@@ -1,5 +1,6 @@
 import { pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core"
 import { createId } from "@paralleldrive/cuid2"
+import { relations } from "drizzle-orm"
 
 export const users = pgTable("users", {
     id: text("id").primaryKey().$defaultFn(() => createId()),
@@ -13,6 +14,12 @@ export const users = pgTable("users", {
     uniqueIndex("clerk_id_idx").on(t.clerkId),
 ])
 
+export const usersRelations = relations(users, ({
+    many,
+}) => ({
+    videos: many(videos)
+}))
+
 export const categories = pgTable("categories", {
     id: text("id").primaryKey().$defaultFn(() => createId()),
     name: text("name").notNull().unique(),
@@ -22,3 +29,36 @@ export const categories = pgTable("categories", {
 }, (t) => [
     uniqueIndex("name_idx").on(t.name),
 ])
+
+export const categoriesRelations = relations(categories, ({
+    many,
+}) => ({
+    videos: many(videos)
+}))
+
+export const videos = pgTable("videos", {
+    id: text("id").primaryKey().$defaultFn(() => createId()),
+    title: text("title").notNull(),
+    description: text("description"),
+    userId: text("user_id").notNull().references(() => users.id, {
+        onDelete: "cascade",
+    }),
+    categoryId: text("category_id").references(() => categories.id, {
+        onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+})
+
+export const videosRelations = relations(videos, ({
+    one,
+}) => ({
+    user: one(users, {
+        fields: [videos.userId],
+        references: [users.id],
+    }),
+    category: one(categories, {
+        fields: [videos.categoryId],
+        references: [categories.id],
+    }),
+}))
