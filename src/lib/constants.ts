@@ -3,3 +3,7 @@ export const RATELIMT_TOKENS = 10
 export const RATELIMIT_DURATION = "10s"
 
 export const DEFAULT_LIMIT = 5
+
+export const INTERSECTION_OBSERVER_THRESHOLD = 0.5
+
+export const INTERSECTION_OBSERVER_ROOT_MARGIN = "100px"
