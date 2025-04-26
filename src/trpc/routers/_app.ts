@@ -1,21 +1,8 @@
-import { z } from 'zod';
-
-import { baseProcedure, createTRPCRouter, protectedProcedure } from '../init';
+import { createTRPCRouter } from "@/trpc/init"
+import { categoriesRouter } from "@/modules/categories/server/procedures"
 
 export const appRouter = createTRPCRouter({
-    hello: protectedProcedure
-        .input(
-            z.object({
-                text: z.string(),
-            }),
-        )
-        .query((opts) => {
-            console.log(opts.ctx.clerkUserId, opts.ctx.user)
+    categories: categoriesRouter,
+})
 
-            return {
-                greeting: `hello ${opts.input.text}`,
-            };
-        }),
-});
-// export type definition of API
-export type AppRouter = typeof appRouter;
+export type AppRouter = typeof appRouter
