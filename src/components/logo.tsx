@@ -3,13 +3,15 @@ import Link from "next/link"
 
 interface LogoProps {
     label?: string,
+    href?: string,
 }
 
 export const Logo = ({
     label = "PlayTube",
+    href = "/",
 }: LogoProps) => {
     return (
-        <Link href="/">
+        <Link href={href}>
             <div className="p-4 flex items-center gap-1">
                 <Image className="size-8" src="/images/logo.svg" alt="Logo" width={32} height={32} quality={100} loading="eager" priority />
                 <p className="text-xl font-semibold tracking-tight">{label}</p>
