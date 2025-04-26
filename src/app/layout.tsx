@@ -5,6 +5,7 @@ import { ClerkProvider } from "@clerk/nextjs"
 import { cn } from "@/lib/utils"
 import "@/app/globals.css"
 import { TRPCProvider } from "@/trpc/client"
+import { Toaster } from "@/components/ui/sonner"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,7 +26,10 @@ const RootLayout = ({
     <ClerkProvider afterSignOutUrl="/">
       <html className="h-full antialiased" lang="en" suppressHydrationWarning>
         <body className={cn("h-full min-w-[360px] antialiased", inter.className)}>
-          <TRPCProvider>{children}</TRPCProvider>
+          <TRPCProvider>
+            <Toaster position="top-center" />
+            {children}
+          </TRPCProvider>
         </body>
       </html>
     </ClerkProvider>
