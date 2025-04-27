@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core"
+import { integer, pgEnum, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core"
 import { createId } from "@paralleldrive/cuid2"
 import { relations } from "drizzle-orm"
 
@@ -36,10 +36,25 @@ export const categoriesRelations = relations(categories, ({
     videos: many(videos)
 }))
 
+export const videoVisibility = pgEnum("video_visibility", [
+    "private",
+    "public",
+])
+
 export const videos = pgTable("videos", {
     id: text("id").primaryKey().$defaultFn(() => createId()),
     title: text("title").notNull(),
     description: text("description"),
+    muxStatus: text("mux_status"),
+    muxAssetId: text("mux_asset_id").unique(),
+    muxUploadId: text("mux_upload_id").unique(),
+    muxPlaybackId: text("mux_playback_id").unique(),
+    muxTrackId: text("mux_track_id").unique(),
+    muxTrackStatus: text("mux_track_status"),
+    thumbnailUrl: text("thumbnail_url"),
+    previewUrl: text("preview_url"),
+    duration: integer("duration").default(0).notNull(),
+    visibility: videoVisibility("visibility").default("private").notNull(),
     userId: text("user_id").notNull().references(() => users.id, {
         onDelete: "cascade",
     }),
