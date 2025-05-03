@@ -11,3 +11,5 @@ export const INTERSECTION_OBSERVER_ROOT_MARGIN = "100px"
 export const MUX_UPLOADER_ID = "mux-video-uploader"
 
 export const MUX_IMAGE_URL = "https://image.mux.com"
+
+export const APP_URL = "http://localhost:3000"
