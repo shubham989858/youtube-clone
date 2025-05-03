@@ -6,6 +6,7 @@ import { db } from "@/db"
 import { videos, videoUpdateSchema } from "@/db/schema"
 import { mux } from "@/lib/mux"
 import { TRPCError } from "@trpc/server"
+import { MUX_IMAGE_URL } from "@/lib/constants"
 
 export const videosRouter = createTRPCRouter({
     create: protectedProcedure.mutation(async ({
@@ -98,5 +99,43 @@ export const videosRouter = createTRPCRouter({
         }
 
         return removedVideo
+    }),
+    restoreThumbnail: protectedProcedure.input(z.object({
+        id: z.string(),
+    })).mutation(async ({
+        ctx,
+        input,
+    }) => {
+        const { id: userId } = ctx.user
+
+        const [existingVideo] = await db.select().from(videos).where(and(
+            eq(videos.id, input.id),
+            eq(videos.userId, userId),
+        ))
+
+        if (!existingVideo) {
+            throw new TRPCError({
+                code: "NOT_FOUND",
+                message: "Video not found.",
+            })
+        }
+
+        if (!existingVideo.muxPlaybackId) {
+            throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: "Video Playback ID is missing.",
+            })
+        }
+
+        const thumbnailUrl = `${MUX_IMAGE_URL}/${existingVideo.muxPlaybackId}/thumbnail.jpg`
+
+        const [updatedVideo] = await db.update(videos).set({
+            thumbnailUrl,
+        }).where(and(
+            eq(videos.id, input.id),
+            eq(videos.userId, userId),
+        )).returning()
+
+        return updatedVideo
     }),
 })
