@@ -13,3 +13,5 @@ export const MUX_UPLOADER_ID = "mux-video-uploader"
 export const MUX_IMAGE_URL = "https://image.mux.com"
 
 export const APP_URL = "http://localhost:3000"
+
+export const THUMBNAIL_FALLBACK = "/images/thumbnail.jpg"
