@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm"
 import { VideoAssetDeletedWebhookEvent, VideoAssetCreatedWebhookEvent, VideoAssetErroredWebhookEvent, VideoAssetReadyWebhookEvent, VideoAssetTrackReadyWebhookEvent } from "@mux/mux-node/resources/webhooks"
 import { headers } from "next/headers"
+import { UTApi } from "uploadthing/server"
 
 import { mux } from "@/lib/mux"
 import { db } from "@/db"
@@ -69,18 +70,43 @@ export const POST = async (request: Request) => {
                 })
             }
 
-            const thumbnailUrl = `${MUX_IMAGE_URL}/${playbackId}/thumbnail.jpg`
+            const tempThumbnailUrl = `${MUX_IMAGE_URL}/${playbackId}/thumbnail.jpg`
 
-            const previewUrl = `${MUX_IMAGE_URL}/${playbackId}/animated.gif`
+            const tempPreviewUrl = `${MUX_IMAGE_URL}/${playbackId}/animated.gif`
 
             const duration = data.duration ? Math.round(data.duration) : 0
+
+            const utApi = new UTApi()
+
+            const [uploadedThumbnail, uploadedPreview] = await utApi.uploadFilesFromUrl([
+                tempThumbnailUrl,
+                tempPreviewUrl,
+            ])
+
+            if (!uploadedThumbnail.data) {
+                return new Response("Failed to upload thumbnail image", {
+                    status: 500,
+                })
+            }
+
+            if (!uploadedPreview.data) {
+                return new Response("Failed to upload preview image", {
+                    status: 500,
+                })
+            }
+
+            const { key: thumbnailKey, url: thumbnailUrl } = uploadedThumbnail.data
+
+            const { key: previewKey, url: previewUrl } = uploadedPreview.data
 
             await db.update(videos).set({
                 muxStatus: data.status,
                 muxPlaybackId: playbackId,
                 muxAssetId: data.id,
                 thumbnailUrl,
+                thumbnailKey,
                 previewUrl,
+                previewKey,
                 duration,
             }).where(eq(videos.muxUploadId, data.upload_id))
 

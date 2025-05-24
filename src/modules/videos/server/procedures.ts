@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm"
 import { z } from "zod"
+import { UTApi } from "uploadthing/server"
 
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init"
 import { db } from "@/db"
@@ -98,6 +99,16 @@ export const videosRouter = createTRPCRouter({
             })
         }
 
+        const utApi = new UTApi()
+
+        if (!!removedVideo.thumbnailKey) {
+            await utApi.deleteFiles(removedVideo.thumbnailKey)
+        }
+
+        if (!!removedVideo.previewKey) {
+            await utApi.deleteFiles(removedVideo.previewKey)
+        }
+
         return removedVideo
     }),
     restoreThumbnail: protectedProcedure.input(z.object({
@@ -120,6 +131,20 @@ export const videosRouter = createTRPCRouter({
             })
         }
 
+        if (!!existingVideo.thumbnailKey) {
+            const utApi = new UTApi()
+
+            await utApi.deleteFiles(existingVideo.thumbnailKey)
+
+            await db.update(videos).set({
+                thumbnailKey: null,
+                thumbnailUrl: null,
+            }).where(and(
+                eq(videos.id, input.id),
+                eq(videos.userId, userId),
+            ))
+        }
+
         if (!existingVideo.muxPlaybackId) {
             throw new TRPCError({
                 code: "BAD_REQUEST",
@@ -127,10 +152,24 @@ export const videosRouter = createTRPCRouter({
             })
         }
 
-        const thumbnailUrl = `${MUX_IMAGE_URL}/${existingVideo.muxPlaybackId}/thumbnail.jpg`
+        const tempThumbnailUrl = `${MUX_IMAGE_URL}/${existingVideo.muxPlaybackId}/thumbnail.jpg`
+
+        const utApi = new UTApi()
+
+        const uploadedThumbnail = await utApi.uploadFilesFromUrl(tempThumbnailUrl)
+
+        if (!uploadedThumbnail.data) {
+            throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to upload thumbnail image",
+            })
+        }
+
+        const { key: thumbnailKey, url: thumbnailUrl } = uploadedThumbnail.data
 
         const [updatedVideo] = await db.update(videos).set({
             thumbnailUrl,
+            thumbnailKey,
         }).where(and(
             eq(videos.id, input.id),
             eq(videos.userId, userId),
