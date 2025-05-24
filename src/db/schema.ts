@@ -1,6 +1,7 @@
 import { integer, pgEnum, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core"
 import { createId } from "@paralleldrive/cuid2"
 import { relations } from "drizzle-orm"
+import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod"
 
 export const users = pgTable("users", {
     id: text("id").primaryKey().$defaultFn(() => createId()),
@@ -52,7 +53,9 @@ export const videos = pgTable("videos", {
     muxTrackId: text("mux_track_id").unique(),
     muxTrackStatus: text("mux_track_status"),
     thumbnailUrl: text("thumbnail_url"),
+    thumbnailKey: text("thumbnail_key"),
     previewUrl: text("preview_url"),
+    previewKey: text("preview_key"),
     duration: integer("duration").default(0).notNull(),
     visibility: videoVisibility("visibility").default("private").notNull(),
     userId: text("user_id").notNull().references(() => users.id, {
@@ -64,6 +67,12 @@ export const videos = pgTable("videos", {
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 })
+
+export const videoInsertSchema = createInsertSchema(videos)
+
+export const videoUpdateSchema = createUpdateSchema(videos)
+
+export const videoSelectSchema = createSelectSchema(videos)
 
 export const videosRelations = relations(videos, ({
     one,
